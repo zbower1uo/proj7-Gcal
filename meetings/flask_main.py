@@ -69,6 +69,24 @@ def choose():
     flask.g.calendars = list_calendars(gcal_service)
     return render_template('index.html')
 
+@app.route("/calendar", methods =["POST", "GET"])
+def selectcalendar():
+  service = get_gcal_service(valid_credentials())
+  calendarids = request.form.getlist("selected_cal")
+
+  for cid in calendarids:
+    events = service.events().list( calendarId = cid , 
+                  timeMin = flask.session["begin_date"],
+                  timeMax = flask.session["end_date"],
+                  singleEvents = True,
+                  orderBy="startTime"
+      ).execute()
+    theEvents = []
+    for e in events['items']:
+      theEvents.append({cid , e["summary"] , e['start']['dateTime'], e['end']['dateTime']})
+      print(theEvents)
+    return flask.redirect(flask.url_for("choose"))
+
 ####
 #
 #  Google calendar authorization:

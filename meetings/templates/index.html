@@ -88,18 +88,22 @@
     shown in each row (but the order is across then down; I would
     prefer down then across). 
     -->
+<form action="/calendar" method="post"> 
 {% if g.calendars is defined  %}
   <div class="row">
   {% for cal in g.calendars if cal.selected %}
           <div class="col-md-4">
-	   {{ cal.summary }}
+      <input type="checkbox" name='selected_cal' value = "{{cal.id}}" >
+     {{ cal.summary }}
           </div>
          {% if loop.index is divisibleby 3 %}
           </div> <div class="row">
          {% endif %}
   {% endfor %}
+  <input type="submit" value="Choose Calendar" />
   </div>
 {% endif %}
+</form>
     
 
   </div>  <!-- container (for bootstrap) -->
