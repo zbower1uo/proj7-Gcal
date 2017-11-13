@@ -89,13 +89,16 @@ def selectcalendar():
         try: #some events arent only have date not datetime
           start = e['start']['dateTime']
           end = e['end']['dateTime']
-          arrow.get(start)
-          arrow.get(end)
+          arrowstart = arrow.get(start).format('YYYY-MM-DD HH:mm')
+          arrowend =arrow.get(end).format('YYYY-MM-DD HH:mm')
+        
+
+
         except:
           start = e['start']['date']
           end = e['end']['date']
         
-        flask.flash("event : " + summary +" " + str(start) + " - " + str(end))
+        flask.flash("event : " + summary +" from: " + str(arrowstart) + " - to: " + str(arrowend))
         #flask.flash(str(start) + " - " + str(end))
         #flask.flash(str(end))
       #print(len(theEvents))
