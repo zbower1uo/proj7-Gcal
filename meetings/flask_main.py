@@ -73,26 +73,33 @@ def choose():
 def selectcalendar():
   service = get_gcal_service(valid_credentials())
   calendarids = request.form.getlist("selected_cal")
-  theEvents = []
+  #theEvents = []
   calendarlist = service.calendarList().list().execute()["items"]
   #for c in calendarlist:
   for cid in calendarids: 
+    flask.flash(cid)
     events = service.events().list( calendarId = cid , 
                     timeMin = flask.session["begin_date"],
                     timeMax = flask.session["end_date"],
                     singleEvents = True,
                     orderBy="startTime"
         ).execute()
-    for e in events['items']:
-      summary = e["summary"]
-      start = e['start']
-      end = e['end']
-      theEvents.append(cid)
-      theEvents.append(summary)
-      theEvents.append(start)
-      theEvents.append(end)
+    for e in events['items']: 
+        summary = e["summary"]
+        try: #some events arent only have date not datetime
+          start = e['start']['dateTime']
+          end = e['end']['dateTime']
+          arrow.get(start)
+          arrow.get(end)
+        except:
+          start = e['start']['date']
+          end = e['end']['date']
+        
+        flask.flash("event : " + summary +" " + str(start) + " - " + str(end))
+        #flask.flash(str(start) + " - " + str(end))
+        #flask.flash(str(end))
       #print(len(theEvents))
-  flask.flash(theEvents)
+  #flask.flash(theEvents)
   calendarids = []
   return flask.redirect(flask.url_for("choose"))
 
