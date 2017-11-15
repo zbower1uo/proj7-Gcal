@@ -84,34 +84,29 @@ def selectcalendar():
     flask.flash(cid)
     print(cid)
     events = service.events().list( calendarId = cid , 
-                    timeMin = begin_time,
-                    timeMax = end_time,
                     singleEvents = True,
                     orderBy="startTime"
         ).execute()
-    print(events)
-    for e in events['items']: 
-        
-        try: #some events arent only have date not datetime
-          summary = e["summary"]
-          start = e['start']['dateTime']
-          end = e['end']['dateTime']
-          arrowstart = arrow.get(start).format('YYYY-MM-DD HH:mm')
-          arrowend =arrow.get(end).format('YYYY-MM-DD HH:mm')
-          start=arrowstart
-          end = arrowend
-        except:
-          summary = e["summary"]
-          start = e['start']['date']
-          end = e['end']['date']
-
-        print(e)
-        flask.flash("event : " + summary +" from: " + str(start) + " - to: " + str(end))
-        #flask.flash(str(start) + " - " + str(end))
-        #flask.flash(str(end))
-      #print(len(theEvents))
-  #flask.flash(theEvents)
-  calendarids = []
+    for e in events['items']:
+      if ("transparency" in e and e["transparency"] == "transparent"):
+        continue
+      else:
+        summary = e["summary"]
+      if "date" in e["start"]:
+        start = "All day " + e["start"]["date"]
+      elif "dateTime" in e["start"]:
+        start = e["start"]
+        end = e["end"]
+        #time = e["start"] + " - " + e["end"]
+      else:
+        raise Exception("unknown time format/something went wrong")
+      theEvents.append({
+        "summary" : summary,
+        "start" : start,
+        "end" : end
+        #"time" : time
+      })
+    print(theEvents)
 
   return flask.redirect(flask.url_for("choose"))
 
