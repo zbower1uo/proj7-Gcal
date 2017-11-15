@@ -73,37 +73,46 @@ def choose():
 def selectcalendar():
   service = get_gcal_service(valid_credentials())
   calendarids = request.form.getlist("selected_cal")
-  #theEvents = []
-  calendarlist = service.calendarList().list().execute()["items"]
-  #for c in calendarlist:
+  theEvents = []
+  #formatting the date and time into an iso format, using now to add the timezone
+  begin_time = arrow.get(flask.session['begin_date'] + "T" + flask.session['start_time']).now().isoformat()
+  end_time = arrow.get(flask.session['end_date'] + "T" + flask.session['end_time']).now().isoformat()  
+  
+  page_token = None
+
   for cid in calendarids: 
     flask.flash(cid)
+    print(cid)
     events = service.events().list( calendarId = cid , 
-                    timeMin = flask.session["begin_date"],
-                    timeMax = flask.session["end_date"],
+                    timeMin = begin_time,
+                    timeMax = end_time,
                     singleEvents = True,
                     orderBy="startTime"
         ).execute()
+    print(events)
     for e in events['items']: 
-        summary = e["summary"]
+        
         try: #some events arent only have date not datetime
+          summary = e["summary"]
           start = e['start']['dateTime']
           end = e['end']['dateTime']
           arrowstart = arrow.get(start).format('YYYY-MM-DD HH:mm')
           arrowend =arrow.get(end).format('YYYY-MM-DD HH:mm')
-        
-
-
+          start=arrowstart
+          end = arrowend
         except:
+          summary = e["summary"]
           start = e['start']['date']
           end = e['end']['date']
-        
-        flask.flash("event : " + summary +" from: " + str(arrowstart) + " - to: " + str(arrowend))
+
+        print(e)
+        flask.flash("event : " + summary +" from: " + str(start) + " - to: " + str(end))
         #flask.flash(str(start) + " - " + str(end))
         #flask.flash(str(end))
       #print(len(theEvents))
   #flask.flash(theEvents)
   calendarids = []
+
   return flask.redirect(flask.url_for("choose"))
 
 ####
@@ -229,16 +238,23 @@ def setrange():
     widget.
     """
     app.logger.debug("Entering setrange")  
-    flask.flash("Setrange gave us '{}'".format(
-      request.form.get('daterange')))
+    start_time = str((request.form.get("starttime")))
+    end_time = str((request.form.get("endtime")))
+
+    flask.session['start_time'] = interpret_time(start_time)[:19][11:]
+    flask.session['end_time'] = interpret_time(end_time)[:19][11:]
+
     daterange = request.form.get('daterange')
     flask.session['daterange'] = daterange
     daterange_parts = daterange.split()
-    flask.session['begin_date'] = interpret_date(daterange_parts[0])
-    flask.session['end_date'] = interpret_date(daterange_parts[2])
+    flask.session['begin_date'] = interpret_date(daterange_parts[0])[:10]
+    flask.session['end_date'] = interpret_date(daterange_parts[2])[:10]
     app.logger.debug("Setrange parsed {} - {}  dates as {} - {}".format(
       daterange_parts[0], daterange_parts[1], 
       flask.session['begin_date'], flask.session['end_date']))
+    print("TIME")
+    print(flask.session['start_time'])
+    print(flask.session['end_time'])
     return flask.redirect(flask.url_for("choose"))
 
 ####
