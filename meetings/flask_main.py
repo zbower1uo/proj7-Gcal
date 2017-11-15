@@ -74,9 +74,9 @@ def selectcalendar():
   service = get_gcal_service(valid_credentials())
   calendarids = request.form.getlist("selected_cal")
   theEvents = []
-  #formatting the date and time into an iso format, using now to add the timezone
-  begin_time = arrow.get(flask.session['begin_date'] + "T" + flask.session['start_time']).now().isoformat()
-  end_time = arrow.get(flask.session['end_date'] + "T" + flask.session['end_time']).now().isoformat()  
+  #formatting the date and time into an iso format, using nows to add the timezone
+  begin_time = arrow.get(flask.session['begin_date'] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal()).isoformat()
+  end_time = arrow.get(flask.session['end_date'] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal()).isoformat()  
   
   page_token = None
 
@@ -95,19 +95,26 @@ def selectcalendar():
       if "date" in e["start"]:
         start = "All day " + e["start"]["date"]
       elif "dateTime" in e["start"]:
-        start = e["start"]
-        end = e["end"]
+        start = e["start"]["dateTime"]
+        end = e["end"]["dateTime"]
         #time = e["start"] + " - " + e["end"]
       else:
         raise Exception("unknown time format/something went wrong")
       theEvents.append({
-        "summary" : summary,
-        "start" : start,
-        "end" : end
+        "summary" : str(summary),
+        "start" : str(start),
+        "end" : str(end)
         #"time" : time
       })
-    print(theEvents)
 
+  for ev in theEvents:
+    ev_start = arrow.get(ev["start"]).isoformat()
+    ev_end = arrow.get(ev["end"]).isoformat()
+    if ev_start <= begin_time and ev_end >= end_time:
+      flask.flash(ev["summary"])
+
+
+    #flask.flash(ev["summary"])
   return flask.redirect(flask.url_for("choose"))
 
 ####
@@ -250,6 +257,8 @@ def setrange():
     print("TIME")
     print(flask.session['start_time'])
     print(flask.session['end_time'])
+    print(flask.session['begin_date'])
+    print(flask.session['end_date'])
     return flask.redirect(flask.url_for("choose"))
 
 ####
