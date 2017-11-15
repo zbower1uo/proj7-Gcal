@@ -75,16 +75,16 @@ def selectcalendar():
   calendarids = request.form.getlist("selected_cal")
   theEvents = []
   #formatting the date and time into an iso format, using nows to add the timezone
-  begin_time = arrow.get(flask.session['begin_date'] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal()).isoformat()
-  end_time = arrow.get(flask.session['end_date'] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal()).isoformat()  
-  
-  page_token = None
+  begin_time = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal())
+  end_time = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal())  
 
   for cid in calendarids: 
     flask.flash(cid)
     print(cid)
-    events = service.events().list( calendarId = cid , 
+    events = service.events().list( calendarId = cid ,
                     singleEvents = True,
+                    timeMin = flask.session['begin_date'],
+                    timeMax = flask.session['end_date'],
                     orderBy="startTime"
         ).execute()
     for e in events['items']:
@@ -108,10 +108,20 @@ def selectcalendar():
       })
 
   for ev in theEvents:
-    ev_start = arrow.get(ev["start"]).isoformat()
-    ev_end = arrow.get(ev["end"]).isoformat()
-    if ev_start <= begin_time and ev_end >= end_time:
-      flask.flash(ev["summary"])
+    print("djfdjsss")
+    b_range_date_s = arrow.get(flask.session["begin_date"]).date()
+    b_range_date_e = arrow.get(flask.session["end_date"]).date()
+    d_busy_start = arrow.get(ev["start"]).date()
+    d_busy_end = arrow.get(ev["end"]).date()
+
+    t_busy_start = arrow.get(ev["start"])
+    t_busy_end = arrow.get(ev["end"])
+    s =  arrow.get(flask.session["begin_date"])
+    e =  arrow.get(flask.session["end_date"])
+
+    if d_busy_start >= b_range_date_s and d_busy_end <= b_range_date_e: #check dates
+        if t_busy_start >= s and t_busy_end <= e:
+          print("here")
 
 
     #flask.flash(ev["summary"])
@@ -249,8 +259,8 @@ def setrange():
     daterange = request.form.get('daterange')
     flask.session['daterange'] = daterange
     daterange_parts = daterange.split()
-    flask.session['begin_date'] = interpret_date(daterange_parts[0])[:10]
-    flask.session['end_date'] = interpret_date(daterange_parts[2])[:10]
+    flask.session['begin_date'] = interpret_date(daterange_parts[0])
+    flask.session['end_date'] = interpret_date(daterange_parts[2])
     app.logger.debug("Setrange parsed {} - {}  dates as {} - {}".format(
       daterange_parts[0], daterange_parts[1], 
       flask.session['begin_date'], flask.session['end_date']))
