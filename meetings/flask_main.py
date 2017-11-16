@@ -75,8 +75,8 @@ def selectcalendar():
   calendarids = request.form.getlist("selected_cal")
   theEvents = []
   #formatting the date and time into an iso format, using nows to add the timezone
-  begin_time = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal())
-  end_time = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal())  
+  begin_time = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal()).isoformat()
+  end_time = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal()).isoformat()  
 
   for cid in calendarids: 
     flask.flash(cid)
@@ -108,20 +108,17 @@ def selectcalendar():
       })
 
   for ev in theEvents:
-    print("djfdjsss")
-    b_range_date_s = arrow.get(flask.session["begin_date"]).date()
-    b_range_date_e = arrow.get(flask.session["end_date"]).date()
-    d_busy_start = arrow.get(ev["start"]).date()
-    d_busy_end = arrow.get(ev["end"]).date()
+    date_range_start = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal())
+    date_range_end = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal())
+    test = flask.session["start_time"]
+    event_start_time = arrow.get(ev["start"]).format('HH:mm:ss')
+    event_end_time = arrow.get(ev["end"]).format('HH:mm:ss') 
 
-    t_busy_start = arrow.get(ev["start"])
-    t_busy_end = arrow.get(ev["end"])
-    s =  arrow.get(flask.session["begin_date"])
-    e =  arrow.get(flask.session["end_date"])
 
-    if d_busy_start >= b_range_date_s and d_busy_end <= b_range_date_e: #check dates
-        if t_busy_start >= s and t_busy_end <= e:
-          print("here")
+    if event_start_time <= flask.session["start_time"] and event_end_time >= flask.session["end_time"]:
+      flask.flash("summary : " + ev["summary"] + "from : " + ev["start"] +" to "+ ev["end"])
+    
+
 
 
     #flask.flash(ev["summary"])
