@@ -83,7 +83,7 @@ def selectcalendar():
     print(cid)
     events = service.events().list( calendarId = cid ,
                     singleEvents = True,
-                    timeMin = flask.session['begin_date'],
+                    timeMin = flask.session['begin_date'], #request time date based on user input
                     timeMax = flask.session['end_date'],
                     orderBy="startTime"
         ).execute()
@@ -97,34 +97,30 @@ def selectcalendar():
       elif "dateTime" in e["start"]:
         start = e["start"]["dateTime"]
         end = e["end"]["dateTime"]
-        #time = e["start"] + " - " + e["end"]
       else:
         raise Exception("unknown time format/something went wrong")
       theEvents.append({
         "summary" : str(summary),
         "start" : str(start),
         "end" : str(end)
-        #"time" : time
       })
 
   for ev in theEvents:
     date_range_start = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal())
     date_range_end = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal())
-    test = flask.session["start_time"]
     event_start_time = arrow.get(ev["start"]).format('HH:mm:ss')
     event_end_time = arrow.get(ev["end"]).format('HH:mm:ss') 
-
     #only one case was handled
     #busy time is before start and extends to after 
     #2 other cases to consider
+    formated_start = arrow.get(ev["start"]).format('YYYY-MM-DD HH:mm')
+    formated_end = arrow.get(ev["end"]).format('YYYY-MM-DD HH:mm')
     if event_start_time <= flask.session["start_time"] and event_end_time >= flask.session["end_time"]:
-      flask.flash("summary : " + ev["summary"] + "from : " + ev["start"] +" to "+ ev["end"])
+      flask.flash("summary : " + ev["summary"] + " from  " + formated_start +" to "+ formated_end)
     #change 
     if event_start_time >= flask.session["start_time"] and event_end_time <= flask.session["end_time"]:
-      flask.flash("summary : " + ev["summary"] + "from : " + ev["start"] +" to "+ ev["end"])
+      flask.flash("summary : " + ev["summary"] + " from  " + formated_start +" to "+ formated_end)
 
-
-    #flask.flash(ev["summary"])
   return flask.redirect(flask.url_for("choose"))
 
 ####
@@ -262,13 +258,8 @@ def setrange():
     flask.session['begin_date'] = interpret_date(daterange_parts[0])
     flask.session['end_date'] = interpret_date(daterange_parts[2])
     app.logger.debug("Setrange parsed {} - {}  dates as {} - {}".format(
-      daterange_parts[0], daterange_parts[1], 
-      flask.session['begin_date'], flask.session['end_date']))
-    print("TIME")
-    print(flask.session['start_time'])
-    print(flask.session['end_time'])
-    print(flask.session['begin_date'])
-    print(flask.session['end_date'])
+    daterange_parts[0], daterange_parts[1], 
+    flask.session['begin_date'], flask.session['end_date']))
     return flask.redirect(flask.url_for("choose"))
 
 ####
