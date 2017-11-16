@@ -114,11 +114,14 @@ def selectcalendar():
     event_start_time = arrow.get(ev["start"]).format('HH:mm:ss')
     event_end_time = arrow.get(ev["end"]).format('HH:mm:ss') 
 
-
+    #only one case was handled
+    #busy time is before start and extends to after 
+    #2 other cases to consider
     if event_start_time <= flask.session["start_time"] and event_end_time >= flask.session["end_time"]:
       flask.flash("summary : " + ev["summary"] + "from : " + ev["start"] +" to "+ ev["end"])
-    
-
+    #change 
+    if event_start_time >= flask.session["start_time"] and event_end_time <= flask.session["end_time"]:
+      flask.flash("summary : " + ev["summary"] + "from : " + ev["start"] +" to "+ ev["end"])
 
 
     #flask.flash(ev["summary"])
