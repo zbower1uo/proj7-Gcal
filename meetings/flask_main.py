@@ -3,7 +3,7 @@ from flask import render_template
 from flask import request
 from flask import url_for
 import uuid
-
+import calc as calcb
 import json
 import logging
 
@@ -37,6 +37,8 @@ app.secret_key=CONFIG.SECRET_KEY
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 CLIENT_SECRET_FILE = CONFIG.GOOGLE_KEY_FILE  ## You'll need this
 APPLICATION_NAME = 'MeetMe class project'
+
+
 
 #############################
 #
@@ -74,37 +76,11 @@ def selectcalendar():
   service = get_gcal_service(valid_credentials())
   calendarids = request.form.getlist("selected_cal")
   theEvents = []
-  #formatting the date and time into an iso format, using nows to add the timezone
-  begin_time = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal()).isoformat()
-  end_time = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal()).isoformat()  
 
-  for cid in calendarids: 
-    flask.flash(cid)
-    print(cid)
-    events = service.events().list( calendarId = cid ,
-                    singleEvents = True,
-                    timeMin = flask.session['begin_date'], #request time date based on user input
-                    timeMax = flask.session['end_date'],
-                    orderBy="startTime"
-        ).execute()
-    for e in events['items']:
-      if ("transparency" in e and e["transparency"] == "transparent"):
-        continue
-      else:
-        summary = e["summary"]
-      if "date" in e["start"]:
-        start = "All day " + e["start"]["date"]
-      elif "dateTime" in e["start"]:
-        start = e["start"]["dateTime"]
-        end = e["end"]["dateTime"]
-      else:
-        raise Exception("unknown time format/something went wrong")
-      theEvents.append({
-        "summary" : str(summary),
-        "start" : str(start),
-        "end" : str(end)
-      })
+  theEvents = calcb.getbusy(service, calendarids,flask.session['begin_date'],flask.session['end_date'])   
 
+  print(theEvents)
+  '''
   for ev in theEvents:
     date_range_start = arrow.get(flask.session['begin_date'][:10] + "T" + flask.session['start_time']).replace(tzinfo=tz.tzlocal())
     date_range_end = arrow.get(flask.session['end_date'][:10] + "T" + flask.session['end_time']).replace(tzinfo=tz.tzlocal())
@@ -120,7 +96,7 @@ def selectcalendar():
     #change 
     if event_start_time >= flask.session["start_time"] and event_end_time <= flask.session["end_time"]:
       flask.flash("summary : " + ev["summary"] + " from  " + formated_start +" to "+ formated_end)
-
+	'''
   return flask.redirect(flask.url_for("choose"))
 
 ####
@@ -251,6 +227,9 @@ def setrange():
 
     flask.session['start_time'] = interpret_time(start_time)[:19][11:]
     flask.session['end_time'] = interpret_time(end_time)[:19][11:]
+
+    default_start_time = start_time
+    default_end_time = end_time
 
     daterange = request.form.get('daterange')
     flask.session['daterange'] = daterange
